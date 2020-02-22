@@ -1,0 +1,76 @@
+GRAMMAR
+
+Program : Global Functions
+
+Global : GLOBAL Var_decls END
+	|ε
+Functions : Def_fun Functions
+                   | Def_fun
+
+Function_name : ID | MAIN
+
+Def_fun : FUNCTION Function_name LPAR Par_decls RPAR COLON Type Statements END
+
+Def_fun : FUNCTION Function_name LPAR RPAR COLON Type Statements END
+
+Par_decls : ID COLON Type COMMA Par_decls
+          | ID COLON Type
+
+Var_decls : Var_decls SEMI ID COLON Type Var_init_value
+          | ID COLON Type Var_init_value
+
+Var_init_value : ASSIGN Expr
+		|ε
+
+Type : NIL | INT | BOOL | FLOAT | STRING
+    | BLPAR Type BRPAR
+    | LPAR Types RPAR ARROW Type
+    | LPAR RPAR ARROW Type
+
+Types : Type COMMA Types
+          | Type
+
+Statements : Stat SEMI Statements
+                 | Stat
+
+Stat :  NOP
+         | WHILE Expr DO Statements END
+         | IF Expr THEN Statements ELSE Statements END
+         | IF Expr THEN Statements END
+         | FOR ID ASSIGN Expr COMMA Expr DO Statements END
+         | LOCAL Var_decls SEMI Statements END
+         | ID ASSIGN Expr
+         | Expr SLPAR Expr SRPAR ASSIGN Expr
+         | ID LPAR Exprs RPAR
+         | Exprs READ
+         | Exprs WRITE
+         | RETURN Expr
+
+Exprs : Expr COMMA Exprs
+                 | Expr
+
+Expr : NIL
+        | TRUE
+        | FALSE
+        | INT_CONST
+        | FLOAT_CONST
+        | STRING_CONST
+        | BLPAR BRPAR COLON Type
+        | ID
+        | Expr SLPAR Expr SRPAR
+        | ID LPAR Exprs RPAR
+        | Expr PLUS Expr
+        | Expr MINUS Expr
+        | Expr TIMES Expr
+        | Expr DIV Expr
+        | Expr AND Expr
+        | Expr OR Expr
+        | Expr GT Expr
+        | Expr GE Expr
+        | Expr LT Expr
+        | Expr LE Expr
+        | Expr EQ Expr
+        | Expr NE Expr
+        | MINUS Expr
+        | NOT Expr
+        | SHARP Expr

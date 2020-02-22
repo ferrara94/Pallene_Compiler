@@ -1,0 +1,49 @@
+global
+    q : string = not true and false;
+    l : bool = not "true";
+    j : bool ;
+    p : float;
+    m : int
+end
+
+function k ( z : string, c : int ) : int
+    z = "ciao" ;
+    m = add ( 7+3.5, k )
+end
+
+function add ( a : int , b : float ) : int
+    return a + b and 5
+end
+
+function main() : nil
+    m, p, j ==>;
+    m+5, m <==;
+    l = functionTest(5.0);
+    l = functionTest(5, 6.0);
+    return "ok"
+end
+
+
+function functionTest( x : int ) : bool
+    local
+
+         a : int = x;
+         b : bool = l;
+         s : string = "ok";
+         c : float = a + p;
+
+        for i=0 , i < x do
+
+            if a >= i then
+                d <==;
+                s = "read"
+                else
+                    r ==>
+            end
+
+        end;
+
+        return true
+
+    end
+end

@@ -1,0 +1,200 @@
+global
+    x_int : int = 10 ;
+    y_int : int = 10 ;
+    x_float : float = 25.5 ;
+    y_float : float = 10.50;
+    welcome : string = "myPallene language"
+end
+
+function sommaInt ( x : int, y : int ) : int
+
+            return x + y
+
+end
+
+function sommaFloat ( x : float, y : float ) : float
+
+            return x + y
+
+end
+
+
+function moltiplicazioneInt ( x : int, y : int ) : int
+
+ local
+
+    result : int = 0;
+
+    for i = 0 , i<y do
+        result = result + x
+    end;
+
+    return result
+
+ end
+
+end
+
+function moltiplicazioneFloat ( x : float, y : float ) : float
+
+ local
+
+
+    result : float = 0.0;
+
+    for i = 0 , i<y do
+        result = result + x
+    end;
+
+    return result
+
+ end
+
+end
+
+
+function divisione ( x : int, y : int ) : int
+
+
+    return x / y
+end
+
+
+function potenza ( x : int, potenza : int ) : int
+    local
+
+           result : int = 1;
+
+
+
+           for i = 1, i <= potenza do
+              result = result * x
+           end;
+
+    return result
+    end
+end
+
+
+
+function  fibonacci (i : int) : int
+
+
+
+    if i < 0 then
+        return -1
+    end;
+
+    if i == 0 then
+        return 0
+    end;
+
+    if i == 1 then
+        return 1
+    else
+        return fibonacci(i - 1) + fibonacci(i-2)
+    end
+
+end
+
+function main () : nil
+
+    local
+        scelta : int = 0;
+        x_float : float;
+        y_float : float;
+        x_int : int;
+        y_int : int;
+        somma : int;
+        prodotto: int;
+        divRes : int;
+        power: int;
+        fibonacciRes: int;
+        br: string = "-----------------------------";
+
+
+        while scelta >= 0 and scelta <= 4 do
+
+            "I valori tra 0 e 4 sono usati per scegliere un'operazione" ==>;
+             "i) 0 = addizione\nii) 1 = moltiplicazione\niii) 2 = divisione\niv) 3 = potenza\nv) 4 = fibonacci\n scelta diversa da [0-4] per uscire dal ciclo\nInserisci valore valore: " ==>;
+             scelta <==;
+
+                if scelta == 0 then
+
+                     "Somma di due interi" ==>;
+                      "Inserisci il Valore x: " ==>;
+                      x_int <==;
+                     "Inserisci il Valore y: " ==>;
+                     y_int <==;
+                     somma = sommaInt(x_int, y_int);
+                     "\nSomma = ", somma  ==>;
+                      br ==>
+
+                end;
+
+                if scelta == 1 then
+
+                    "Moltiplicazioni di due interi con Somma" ==>;
+                    "Inserisci il Valore x: " ==>;
+                     x_int <==;
+                     "Inserisci il Valore y: " ==>;
+                     y_int <==;
+                     prodotto = moltiplicazioneInt(x_int, y_int);
+                      "\nMoltiplicazione = ", prodotto ==>;
+                      br ==>
+                end;
+
+                if scelta == 2 then
+
+                    "Divisione di due interi" ==>;
+                    "Inserisci il Valore x: " ==>;
+                     x_int <==;
+                     "Inserisci il Valore y: " ==>;
+                     y_int <==;
+                     divRes = divisione(x_int , y_int);
+                      "\nDivisione = ", divRes ==>;
+                      br ==>
+                end;
+
+                if scelta == 3 then
+
+                    "Elevamento a Potenza" ==>;
+                    "Inserisci il Valore x: " ==>;
+                     x_int <==;
+                    "Inserisci l'elevamento a potenza: " ==>;
+                     y_int <==;
+                     power = potenza(x_int, y_int);
+                     "\nPotenza = ", power ==>;
+                     br ==>
+
+                end;
+
+                if scelta == 4 then
+
+                    "Fibonacci" ==>;
+                    "Inserisci il Valore x: " ==>;
+                     x_int <==;
+                     fibonacciRes = fibonacci(x_int);
+                     "\nFibonacci = ", fibonacciRes ==>;
+                     br ==>
+
+                end;
+
+
+                 if scelta > 4 or scelta < 0 then
+
+                     "Valore inserito: ", scelta ==>;
+                     "Fine" ==>;
+                     "break" ==>
+
+                 end
+
+
+            end
+    end
+
+end
+
+
+
+

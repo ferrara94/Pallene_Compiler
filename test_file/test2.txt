@@ -1,0 +1,53 @@
+global
+    a : string = b;
+    b : string = a;
+    b : bool = true;
+    c : int = 0.9;
+    d : float = c + 0.9;
+    e : int = -65;
+    f : string = - 6;
+    g : string = -"ciao";
+    h : bool;
+    i : int = #"3"
+end
+
+function test ( z : string, c : int ) : int
+    z = "ciao" ;
+    c = #z;
+    #z, 768 ==>;
+
+    if c > z then
+        z = z + 5
+    end;
+
+    if c > h then
+            return true else
+                return false
+    end;
+
+    m = add ( 7+3.5, add );
+    c = add ( 3, 8.9 )
+end
+
+function test2 ( ) : bool
+    if operation() > 30 then
+        return true else
+            return false
+    end
+end
+
+function add ( a : int , b : float ) : int
+    return a + b and 5
+end
+
+function add ( a : int , b : float ) : int
+    return a + 23
+end
+
+function operation() : nil
+    nop
+end
+
+function main() : nil
+    return "ok"
+end

@@ -1,0 +1,1136 @@
+import java_cup.runtime.*;
+import syntaxTree.*;
+import syntaxTree.expr.constant.*;
+import syntaxTree.expr.binaryexpr.arithop.*;
+import syntaxTree.statement.ASSIGNMENT.*;
+import syntaxTree.expr.unaryexpr.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import javax.xml.parsers.DocumentBuilder;
+import org.w3c.dom.Attr;
+import javax.xml.parsers.DocumentBuilderFactory;
+import syntaxTree.statement.Conditional.IF_THEN;
+import syntaxTree.statement.Conditional.IF_THEN_ELSE;
+import syntaxTree.expr.binaryexpr.relop.*;
+import syntaxTree.statement.Others.NOP;
+import syntaxTree.statement.Others.WHILE_DO;
+import syntaxTree.statement.Others.ID_STATEMENT;
+import syntaxTree.statement.Others.LOCAL;
+import syntaxTree.statement.Others.FOR;
+import syntaxTree.statement.Others.RETURN;
+import syntaxTree.statement.Others.ARRAY_STAT;
+import syntaxTree.statement.IO.READ;
+import syntaxTree.statement.IO.WRITE;
+
+
+
+import java.util.*;
+
+parser code{:
+	PalleneLexer lexer;
+	Document document;
+	Element root, tempE;
+
+
+	public parser(PalleneLexer  lexer, Document document, Element root, Element tempE){
+	    this.lexer = lexer;
+	    this.document = document;
+	    this.root = root;
+	    this.tempE = tempE;
+    }
+:};
+
+scan with {: return lexer.next_token(); :};
+
+terminal		String IF, THEN, ELSE, WHILE, DO;
+terminal        String FUNCTION, MAIN;
+terminal        String NIL;
+terminal        String END;
+terminal        String FLOAT, INT, BOOL, STRING;
+terminal        String ARROW, NOP, FOR, LOCAL;
+terminal		String LPAR, RPAR, SLPAR, SRPAR, BLPAR, BRPAR;
+terminal		String PLUS,MINUS,TIMES,DIV;
+terminal        String UMINUS;
+terminal        String COMMA, COLON, SEMICOLON;
+terminal		String GT, GE, LT, LE, EQ, NE;
+terminal		String NOT,AND,OR;
+terminal		String SHARP, ASSIGN, ID;
+terminal		String TRUE, FALSE;
+terminal		String READ,WRITE;
+terminal 		String GLOBAL, RETURN;
+terminal		String INT_CONST, IDENTIFIER, FLOAT_CONST, EXP, BLANK;
+terminal        String STRING_CONST;
+terminal        String TERMINATOR;
+
+non terminal	Program Programma;
+non terminal    Global Global;
+non terminal    LinkedList<Function> Functions;
+non terminal	LinkedList<VarDecl> Var_decls;
+non terminal	Def_fun Def_fun;
+non terminal    Expr Function_name;
+non terminal    LinkedList<ParDecl> Par_decls;
+non terminal	Type Type;
+non terminal    LinkedList<Type> Types;
+non terminal	LinkedList<Statement> Statements;
+non terminal    Statement Stat;
+non terminal    Expr Expr;
+non terminal    LinkedList<Expr> Exprs;
+non terminal 	LinkedList<ID> Vars;
+non terminal    VarIntValue Var_init_value;
+
+/* Precedences */
+precedence left COMMA;
+precedence left SEMICOLON;
+precedence left END;
+precedence left ELSE;
+precedence left ASSIGN;
+precedence left AND, OR;
+precedence left EQ, GT, GE, LT, LE, NOT, NE;
+precedence left PLUS, MINUS;
+precedence left TIMES, DIV;
+precedence left SHARP;
+precedence left UMINUS;
+precedence left FLOAT_CONST, INT_CONST;
+precedence left SLPAR, SRPAR;
+
+
+start with Programma;
+
+//1
+Programma  ::= Global:global Functions:functions
+           {:
+                Program program = new Program("ProgramOp", global, functions);
+
+                Node g = new Global("Global");
+                Node f = new Function("Functions");
+
+                program.element = document.createElement("ProgramOp");
+                root = document.createElement("Global");
+
+                for(VarDecl decl: global.getVarDecls()){
+                    g.addChild(decl);
+                    root.appendChild(decl.element);
+                }
+
+                program.element.appendChild(root);
+                root = document.createElement("Function");
+
+                program.addChild(g);
+                //program.addChild(new Expr("/Global"));
+
+                for (Function fu: functions){
+                    for (Def_fun def: fu.getDef()){
+                        f.addChild(def);
+                        root.appendChild(def.element);
+                    }
+                }
+
+                program.element.appendChild(root);
+                program.addChild(f);
+                RESULT = program;
+
+                //System.out.println(f.listChildren());
+                //System.out.println(program.nodeTemp.listChildren());
+                //System.out.println(program.nodeTemp.listChildren());
+           :};
+
+
+//2
+Global ::= GLOBAL Var_decls:var END
+        {:
+
+            RESULT = new Global("Global",var);
+            RESULT.element = document.createElement("GLOBAL");
+
+            for (VarDecl n: var){
+                RESULT.addChild(n);
+                RESULT.element.appendChild(n.element);
+                }
+            //ok
+
+
+        :}
+        | {::};
+
+//3
+Functions ::= Def_fun:def_fun Functions:functions
+            {:
+            //System.out.println(def_fun.listChildren());
+                RESULT = new LinkedList<Function>();
+                Function f = new Function("FunctionOp");
+                f.addDefFun(def_fun);
+
+                f.element = document.createElement("FunctionOp");
+                f.element.appendChild(def_fun.element);
+
+                RESULT.add(f);
+
+                for (Function fs: functions) {
+                    RESULT.add(fs);
+                }
+
+            :}
+            | Def_fun:def_fun
+            {:
+
+                RESULT = new LinkedList<Function>();
+                Function f = new Function("FunctionOp");
+                f.addDefFun(def_fun);
+                //f.addDefFun(new Def_fun("/DefFunOp"));
+
+                f.element = document.createElement("FunctionOp");
+                f.element.appendChild(def_fun.element);
+
+                RESULT.add(f);
+                //System.out.println(def_fun.listChildren());
+            :};
+
+Function_name ::= ID:id
+{:
+                 RESULT = new ID("ID",id);
+                //SintaxTree
+                 RESULT.element = document.createElement("ID");
+                 Attr attr = document.createAttribute("value");
+                 attr.setValue(id);
+                 RESULT.element.setAttributeNode(attr);
+
+                :}
+                | MAIN:main
+                {:
+                    RESULT = new ID("ID","main");
+
+                    //SintaxTree
+                    RESULT.element = document.createElement("ID");
+                    Attr attr = document.createAttribute("value");
+                    attr.setValue("main");
+                    RESULT.element.setAttributeNode(attr);
+                :};
+
+//4
+Def_fun ::= FUNCTION Function_name:name LPAR Par_decls:par_decls RPAR COLON Type:type Statements:statements END
+        {:
+
+        RESULT = new Def_fun("DefFunOp", new ID("Id",name.getName()), par_decls, type, statements);
+        RESULT.addChild(new ID("Id", name.getName()));
+        //ParDecl e = new ParDecl("ParDeclOp",new ID("Id",id),type);
+
+        //Sintax Tree
+        //tempE = document.createElement("ParDeclOp");
+
+        RESULT.element = document.createElement("DefFunOp");
+        root = document.createElement("ID");
+        Attr attr = document.createAttribute("value");
+        attr.setValue(name.getName());
+        root.setAttributeNode(attr);
+        RESULT.element.appendChild(root);
+
+        for(ParDecl par: par_decls) {
+           RESULT.addChild(par);
+           //System.out.println(par.listChildren());
+           RESULT.element.appendChild(par.element);
+        }
+
+        //RESULT.element.appendChild(tempE);
+        RESULT.element.appendChild(type.element);
+
+        //RESULT.addChild(e);
+        RESULT.addChild(type);
+        //RESULT.addChild(new Node("/ParDeclop"));
+        Statement e2 = new Statement("Statement");
+        tempE = document.createElement("Statement");
+
+
+        for (Statement stat: statements) {
+            e2.addChild(stat);
+            tempE.appendChild(stat.element);
+            //ok
+            //System.out.println(stat.element);
+        }
+
+        RESULT.element.appendChild(tempE);
+        RESULT.addChild(e2);
+
+
+        //RESULT.addChild(new Expr("/Statement"));
+
+        //ok
+
+
+
+        :}
+        | FUNCTION Function_name:name LPAR RPAR COLON Type:type Statements:statements END
+        {:
+
+            RESULT = new Def_fun("DefFunOp", new ID("Id",name.getName()), type, statements);
+            RESULT.addChild(new ID("Id", name.getName()));
+            RESULT.addChild(type);
+
+            for(Node n: statements){
+                RESULT.addChild(n);
+            }
+
+            //Sintax Tree
+            RESULT.element = document.createElement("DefFunOp");
+            root = document.createElement("ID");
+            Attr attr = document.createAttribute("value");
+            attr.setValue(name.getName());
+            root.setAttributeNode(attr);
+            RESULT.element.appendChild(root);
+            RESULT.element.appendChild(type.element);
+            for(Node n: statements){
+                RESULT.element.appendChild(n.element);
+            }
+
+            //System.out.println(RESULT.nodeTemp.listChildren());
+
+
+        :};
+
+//6
+Par_decls ::= ID:id COLON Type:type COMMA Par_decls:par_decls
+            {:
+            RESULT = new LinkedList<ParDecl>();
+            ParDecl p = new ParDecl("ParDeclOp", new ID("ID",id), type);
+            p.addChild(new ID("ID",id));
+            p.addChild(type);
+
+             //Sintax Tree
+             p.element = document.createElement("ParDeclOp");
+             root = document.createElement("ID");
+             Attr attr = document.createAttribute("value");
+             attr.setValue(id);
+             root.setAttributeNode(attr);
+             p.element.appendChild(root);
+             p.element.appendChild(type.element);
+
+             RESULT.add(p);
+
+             for (ParDecl parD: par_decls) {
+                RESULT.add(parD);
+             }
+
+             //ok
+
+            :}
+            | ID:id COLON Type:type
+            {:
+
+            RESULT = new LinkedList<ParDecl>();
+            ParDecl p = new ParDecl("ParDeclOp", new ID("ID",id), type);
+            p.addChild(new ID("ID",id));
+            p.addChild(type);
+
+            //Sintax Tree
+            p.element = document.createElement("ParDeclOp");
+            root = document.createElement("ID");
+            Attr attr = document.createAttribute("value");
+            attr.setValue(id);
+            root.setAttributeNode(attr);
+            p.element.appendChild(root);
+            p.element.appendChild(type.element);
+
+            RESULT.add(p);
+            //ok
+            //RESULT.add(new ParDecl("/ParDeclOp", new ID(id,id), type));
+            :};
+
+//Var_decls ::= ID:id COLON Type:type Var_init_value:var_init SEMICOLON Var_decls:var_decls
+//Var_decls::=var_decls SEMICOLON ID:id COLON Type:type Var_init_value:var_init
+Var_decls ::= Var_decls:var_decls SEMICOLON ID:id COLON Type:type Var_init_value:var_init
+            {:
+                ID i = new ID("Id",id);
+                RESULT = new LinkedList<VarDecl>();
+
+                for (VarDecl v: var_decls) {
+                    RESULT.add(v);
+                }
+
+                VarDecl varD = new VarDecl("VarDeclOp",i ,type);
+
+                varD.addChild(i);
+                varD.addChild(type);
+                if (var_init != null) {
+                varD.addChild(var_init);
+                }
+                //varD.addChild(new Expr("/ASSIGMENT"));
+
+                //Sintax Tree
+                varD.element = document.createElement("VarDeclOp");
+                root = document.createElement("ID");
+                Attr attr = document.createAttribute("value");
+                attr.setValue(id);
+                root.setAttributeNode(attr);
+
+                varD.element.appendChild(root);
+                varD.element.appendChild(type.element);
+                if (var_init != null) {
+                varD.element.appendChild(var_init.element);
+                }
+
+                RESULT.add(varD);
+
+
+
+                //RESULT.add(new VarDecl("/VarDeclOp",new ID(id,id),type,var_init));
+
+            :}
+            | ID:id COLON Type:type Var_init_value:var_init
+            {:
+
+                ID i = new ID("Id",id);
+                RESULT = new LinkedList<VarDecl>();
+
+
+                VarDecl varD = new VarDecl("VarDeclOp",i,type);
+                varD.addChild(i);
+                varD.addChild(type);
+                if (var_init != null) {
+                varD.addChild(var_init);
+                }
+
+                //Sintax Tree
+                varD.element = document.createElement("VarDeclOp");
+                root = document.createElement("ID");
+                Attr attr = document.createAttribute("value");
+                attr.setValue(id);
+                root.setAttributeNode(attr);
+
+                varD.element.appendChild(root);
+                varD.element.appendChild(type.element);
+                if (var_init != null) {
+                varD.element.appendChild(var_init.element);
+                }
+
+                RESULT.add(varD);
+
+               //RESULT.add(new VarDecl("/VarDeclOp",new ID(id,id),type,var_init));
+            :};
+
+//8
+Var_init_value ::= ASSIGN:assign Expr:expr
+            {:
+
+                //System.out.println(expr.listChildren());
+
+                RESULT = new VarIntValue("Var_init",expr);
+                RESULT.addChild(expr);
+
+                //Sintax Tree
+                RESULT.element = document.createElement("Var_init");
+                RESULT.element.appendChild(expr.element);
+                //System.out.println(RESULT.listChildren());
+
+
+            :}
+            |
+            ;
+
+//9
+Type ::= NIL
+        {:
+            RESULT = new Type("NIL");
+            //Sintax Tree
+            RESULT.element = document.createElement("NIL");
+        :}
+        | INT:int_t
+        {:
+            RESULT = new Type("INT");
+            //Sintax Tree
+            RESULT.element = document.createElement("INT");
+        :}
+        | BOOL
+        {:
+            RESULT = new Type("BOOL");
+            RESULT.element = document.createElement("BOOL");
+        :}
+        | FLOAT
+        {:
+            RESULT = new Type("FLOAT");
+            RESULT.element = document.createElement("FLOAT");
+        :}
+        | STRING
+        {:
+            RESULT = new Type("STRING");
+            //Sintax Tree
+            RESULT.element = document.createElement("STRING");
+        :}
+        | BLPAR Type:type BRPAR
+        {:
+            RESULT = type;
+            RESULT.element = type.element;
+        :}
+        | LPAR Types:types RPAR ARROW Type:type
+        {:
+            RESULT = new Type("Complex_Type");
+            for (Type tp: types) {
+                RESULT.addChild(tp);
+                RESULT.element = tp.element;
+            }
+
+            RESULT.addChild(type);
+            RESULT.element = type.element;
+        :}
+        | LPAR RPAR ARROW Type:type
+        {:
+            RESULT = type;
+            RESULT.element = type.element;
+        :};
+
+//10
+Types ::= Type:type COMMA Types:types
+        {:
+            LinkedList<Type> tp = new LinkedList<Type>();
+            tp.add(type);
+            //tp.element = type.element;
+
+            for(Type t: types) {
+                tp.add(t);
+                //tp.element = t.element;
+            }
+
+            RESULT = tp;
+        :}
+        | Type:type
+        {:
+            LinkedList<Type> t = new LinkedList<Type>();
+            t.add(type);
+
+            RESULT = t;
+        :};
+
+//11
+Statements ::= Stat:stat SEMICOLON Statements:statements
+        {:
+
+        RESULT = new LinkedList<Statement>();
+        RESULT.add(stat);
+
+        for (Statement s: statements) {
+              RESULT.add(s);
+        }
+
+        //ok
+        //RESULT.add(new Statement("/STATEMENT"));
+        :}
+        |Stat:stat
+        {:
+
+            RESULT = new LinkedList<Statement>();
+            RESULT.add(stat);
+            //RESULT.add(new Statement("/"+stat.getName()));
+
+            //ok
+            //System.out.println(stat.listChildren());
+        :};
+
+//12
+Stat ::= NOP
+        {:
+            RESULT = new NOP("NoOperation");
+            RESULT.element = document.createElement("NoOperation");
+        :}
+        | WHILE Expr:expr DO Statements:statements END
+        {:
+            RESULT = new WHILE_DO("WHILE_STATEMENTS");
+            RESULT.addChild(expr);
+            RESULT.element = document.createElement("WHILE_STATEMENTS");
+            RESULT.element.appendChild(expr.element);
+
+
+            for (Statement stat: statements) {
+                RESULT.addChild(stat);
+                RESULT.element.appendChild(stat.element);
+            }
+        :}
+        | IF Expr:expr THEN Statements:statements ELSE Statements:statements2 END
+        {:
+            RESULT = new IF_THEN_ELSE("IF_THEN_ELSE_STATEMENT");
+            RESULT.addChild(expr);
+
+            RESULT.element = document.createElement("IF_THEN_ELSE_STATEMENT");
+            RESULT.element.appendChild(expr.element);
+
+            for (Statement s: statements) {
+                RESULT.addChild(s);
+                RESULT.element.appendChild(s.element);
+            }
+
+            Statement elseS = new Statement("ELSE");
+            elseS.element = document.createElement("ELSE");
+
+            for (Statement s2: statements2) {
+                elseS.addChild(s2);
+                elseS.element.appendChild(s2.element);
+            }
+
+            RESULT.addChild(elseS);
+            RESULT.element.appendChild(elseS.element);
+
+        :}
+        | IF Expr:expr THEN Statements:statements END
+        {:
+            RESULT = new IF_THEN("IF_THEN_STATEMENT");
+            RESULT.addChild(expr);
+
+            RESULT.element = document.createElement("IF_THEN_STATEMENT");
+            RESULT.element.appendChild(expr.element);
+
+            for (Statement s: statements) {
+                RESULT.addChild(s);
+                RESULT.element.appendChild(s.element);
+            }
+
+            //ok
+            //System.out.println(RESULT.listChildren());
+        :}
+        | FOR ID:id ASSIGN Expr:expr COMMA Expr:expr2 DO Statements:statements END
+        {:
+            RESULT = new FOR("FOR_STATEMENT");
+
+            FOR_ASSIGN forAss = new FOR_ASSIGN("FOR_ASSIGNMENT",new ID("ID",id), expr);
+            forAss.element = document.createElement("FOR_ASSIGNMENT");
+
+            forAss.addChild(new ID("ID",id));
+            forAss.addChild(expr);
+
+            root = document.createElement("ID");
+            Attr attr = document.createAttribute("value");
+            attr.setValue(id);
+            root.setAttributeNode(attr);
+            forAss.element.appendChild(root);
+
+            forAss.element.appendChild(expr.element);
+
+            RESULT.element = document.createElement("FOR_STATEMENT");
+
+
+            RESULT.addChild(forAss);
+            RESULT.element.appendChild(forAss.element);
+
+            RESULT.addChild(expr2);
+            RESULT.element.appendChild(expr2.element);
+
+            for (Statement s: statements) {
+                RESULT.addChild(s);
+                RESULT.element.appendChild(s.element);
+            }
+
+        :}
+        | LOCAL Var_decls:var SEMICOLON Statements:statements END
+        {:
+            RESULT = new LOCAL("LOCAL_STATEMENT");
+            RESULT.element = document.createElement("LOCAL_STATEMENT");
+
+            for( VarDecl v: var){
+                RESULT.addChild(v);
+                RESULT.element.appendChild(v.element);
+            }
+
+            for( Statement s: statements){
+                RESULT.addChild(s);
+                RESULT.element.appendChild(s.element);
+            }
+            //problema su SEMICOLON -> RISOLTO CAMBIANDO LA PRODUZIONE VAR_DECLOP
+        :}
+        | ID:id ASSIGN Expr:expr
+        {:
+            RESULT = new ASSIGNMENT("AssignmentOp", new ID(id,id), expr);
+
+            RESULT.addChild(new ID(id,id));
+            RESULT.addChild(expr);
+
+            //Sintax Tree
+            RESULT.element = document.createElement("AssignmentOp");
+            root = document.createElement("ID");
+            Attr attr = document.createAttribute("value");
+            attr.setValue(id);
+            root.setAttributeNode(attr);
+            RESULT.element.appendChild(root);
+            RESULT.element.appendChild(expr.element);
+
+            //System.out.println(RESULT.element.getTagName());
+        :}
+        | Expr:expr SLPAR Expr:expr2 SRPAR ASSIGN Expr:expr3
+        {:
+            RESULT = new ASSIGNMENT("AssignmentOp");
+            //Sintax Tree
+            RESULT.element = document.createElement("AssignmentOp");
+
+
+            ARRAY_STAT arrayStat = new ARRAY_STAT("ArrayStat");
+            arrayStat.element = document.createElement("ArrayStat");
+
+            arrayStat.addChild(expr);
+            arrayStat.element.appendChild(expr.element);
+
+            arrayStat.addChild(expr2);
+            arrayStat.element.appendChild(expr2.element);
+
+            RESULT.addChild(arrayStat);
+            RESULT.element.appendChild(arrayStat.element);
+
+            RESULT.addChild(expr3);
+            RESULT.element.appendChild(expr3.element);
+
+
+        :}
+        | ID:id LPAR Exprs:exprs RPAR
+        {:
+
+        :}
+        /*| Vars:vars READ
+        {:
+            RESULT = new READ("READ_STATEMENT");
+            RESULT.element = document.createElement("READ_STATEMENT");
+
+            for( ID id: vars){
+                RESULT.addChild(id);
+                RESULT.element.appendChild(id.element);
+            }
+
+        //ok
+        //System.out.println(RESULT.listChildren());
+        :}*/
+        | Exprs:exprs READ
+        {:
+            RESULT = new READ("READ_STATEMENT");
+            RESULT.element = document.createElement("READ_STATEMENT");
+
+            for (Expr e: exprs) {
+                RESULT.addChild(e);
+                RESULT.element.appendChild(e.element);
+            }
+        :}
+        | Exprs:exprs WRITE
+        {:
+            RESULT = new WRITE("WRITE_STATEMENT");
+            RESULT.element = document.createElement("WRITE_STATEMENT");
+
+            for (Expr e: exprs) {
+                RESULT.addChild(e);
+                RESULT.element.appendChild(e.element);
+            }
+        :}
+        | RETURN Expr:expr
+        {:
+            //RESULT = new LinkedList<Statement>();
+            RESULT = new RETURN("RETURN");
+            RESULT.addChild(expr);
+            //RESULT.add(new RETURN("/RETURN"));
+
+            //Sintax Tree
+            RESULT.element = document.createElement("RETURN_STATEMENT");
+            RESULT.element.appendChild(expr.element);
+
+        :};
+
+//13
+/*Vars ::= ID:id COMMA Vars:vars
+        {:
+            RESULT = new LinkedList<ID>();
+            ID identifier = new ID("ID", id);
+
+            root = document.createElement("ID");
+            Attr attr = document.createAttribute("value");
+            attr.setValue(id);
+            root.setAttributeNode(attr);
+
+            identifier.element = root;
+
+            RESULT.add(identifier);
+
+            for(ID i: vars)
+                RESULT.add(i);
+        :}
+        | ID:id
+        {:
+            RESULT = new LinkedList<ID>();
+            ID identifier = new ID("ID",id);
+
+            //Sintax Tree
+            root = document.createElement("ID");
+            Attr attr = document.createAttribute("value");
+            attr.setValue(id);
+            root.setAttributeNode(attr);
+
+            identifier.element = root;
+
+            RESULT.add(identifier);
+            //ok
+        :};*/
+
+//14
+Exprs ::= Expr:expr COMMA Exprs:exprs
+        {:
+
+            RESULT = new LinkedList<Expr>();
+
+            RESULT.add(expr);
+
+            for (Expr ex: exprs)
+                RESULT.add(ex);
+
+            //ok
+            /*RESULT = new LinkedList<Expr>();
+            RESULT.add( new SHARP_EXPR(expr.getName()) );
+            RESULT.add( new STRING_CONST(expr.getName(),expr.getStringValue()) );*/
+        :}
+        | Expr:expr
+        {:
+
+            RESULT = new LinkedList<Expr>();
+            RESULT.add(expr);
+
+            //System.out.println(expr.listChildren());
+        :};
+
+//15
+Expr ::=  NIL
+        {:
+            RESULT = new NIL_CONST("NIL_CONST");
+            RESULT.element = document.createElement("NIL_CONST");
+        :}
+        | TRUE
+        {:
+            RESULT = new BOOLEAN_CONST("TRUE_CONST", true);
+            RESULT.element = document.createElement("TRUE");
+        :}
+        | FALSE
+        {:
+            RESULT = new BOOLEAN_CONST("FALSE_CONST", false);
+            RESULT.element = document.createElement("FALSE");
+        :}
+        | FLOAT_CONST:float_value
+        {:
+            RESULT = new FLOAT_CONST("FLOAT_CONST", float_value);
+
+            //Sintax Tree
+            RESULT.element = document.createElement("FLOAT_CONST");
+            Attr attr = document.createAttribute("value");
+            attr.setValue(float_value);
+            RESULT.element.setAttributeNode(attr);
+        :}
+        | EXP:e
+        {:
+            RESULT = new FLOAT_CONST("FLOAT_CONST", e);
+
+            //Sintax Tree
+             RESULT.element = document.createElement("FLOAT_CONST");
+             Attr attr = document.createAttribute("value");
+             attr.setValue(e);
+             RESULT.element.setAttributeNode(attr);
+        :}
+        | INT_CONST:int_value
+        {:
+           RESULT = new INT_CONST("INT_CONST", int_value);
+
+           //Sintax Tree
+          RESULT.element = document.createElement("INT_CONST");
+          Attr attr = document.createAttribute("value");
+          attr.setValue(int_value);
+          RESULT.element.setAttributeNode(attr);
+
+          //System.out.println(RESULT.listChildren());
+        :}
+        | STRING_CONST:string
+        {:
+
+            RESULT = new STRING_CONST("STRING_CONST",string);
+
+            //Sintax Tree
+            RESULT.element = document.createElement("STRING_CONST");
+            Attr attr = document.createAttribute("value");
+            attr.setValue(string);
+            RESULT.element.setAttributeNode(attr);
+        :}
+        | BLPAR BRPAR COLON Type:type
+        {:
+            RESULT = new TYPE_CONST(type.getName());
+            RESULT.element = type.element;
+        :}
+        | ID:id
+        {:
+            RESULT = new ID("ID",id);
+            //SintaxTree
+            RESULT.element = document.createElement("ID");
+            Attr attr = document.createAttribute("value");
+            attr.setValue(id);
+            RESULT.element.setAttributeNode(attr);
+
+            //ok
+
+        :}
+        | Expr:expr SLPAR Expr:expr2 SRPAR
+         {:
+            RESULT = new Expr("[]_EXPR");
+            RESULT.addChild(expr);
+            RESULT.addChild(expr2);
+
+            //sintax tree
+            RESULT.element = document.createElement("[]_EXPR");
+            RESULT.element.appendChild(expr.element);
+            RESULT.element.appendChild(expr2.element);
+
+         :}
+        | ID:id LPAR RPAR
+        {:
+            RESULT = new FUNCT_EXPR("FUNCT_EXPRESSION", new ID(id,id));
+            RESULT.addChild(new ID(id,id));
+
+            PARAMETERS_F paramters = new PARAMETERS_F("PARAMETERS");
+            RESULT.addChild(paramters);
+
+            RESULT.element = document.createElement("FUNCT_EXPRESSION");
+            paramters.element = document.createElement("PARAMETERS");
+
+            root = document.createElement("ID");
+            Attr attr = document.createAttribute("value");
+            attr.setValue(id);
+            root.setAttributeNode(attr);
+            RESULT.element.appendChild(root);
+
+            RESULT.element.appendChild(paramters.element);
+
+        :}
+        | ID:id LPAR Exprs:exprs RPAR
+        {:
+           RESULT = new FUNCT_EXPR("FUNCT_EXPRESSION", new ID(id,id),exprs);
+           RESULT.addChild(new ID(id,id));
+
+           PARAMETERS_F paramters = new PARAMETERS_F("PARAMETERS");
+
+           for ( Expr e: exprs)
+                paramters.addChild(e);
+
+           RESULT.addChild(paramters);
+
+            //Sintax Tree
+           RESULT.element = document.createElement("FUNCT_EXPRESSION");
+           paramters.element = document.createElement("PARAMETERS");
+
+           root = document.createElement("ID");
+           Attr attr = document.createAttribute("value");
+           attr.setValue(id);
+           root.setAttributeNode(attr);
+           RESULT.element.appendChild(root);
+
+           for ( Expr e: exprs)
+               paramters.element.appendChild(e.element);
+
+           RESULT.element.appendChild(paramters.element);
+
+
+
+            //ok
+           //System.out.println(RESULT.getName());
+
+        :}
+        | Expr:expr PLUS Expr:expr2
+        {:
+            RESULT = new PLUS("AddOp");
+
+            RESULT.addChild(expr);
+            RESULT.addChild(expr2);
+
+            //Sintax Tree
+            root = document.createElement("AddOp");
+            root.appendChild(expr.element);
+            root.appendChild(expr2.element);
+
+            //ok
+            //System.out.println(RESULT.getName());
+
+            RESULT.element = root;
+        :}
+        | Expr:expr MINUS Expr:expr2
+        {:
+            RESULT = new MINUS("Minus");
+
+            RESULT.addChild(expr);
+            RESULT.addChild(expr2);
+
+            //Sintax Tree
+            root = document.createElement("Minus");
+            root.appendChild(expr.element);
+            root.appendChild(expr2.element);
+
+            RESULT.element = root;
+        :}
+        | Expr:expr TIMES Expr:expr2
+        {:
+            RESULT = new TIMES("Times");
+
+            RESULT.addChild(expr);
+            RESULT.addChild(expr2);
+
+            //Sintax Tree
+            root = document.createElement("Times");
+            root.appendChild(expr.element);
+            root.appendChild(expr2.element);
+
+            RESULT.element = root;
+        :}
+        | Expr:expr DIV Expr:expr2
+        {:
+            RESULT = new DIV("Div");
+
+            RESULT.addChild(expr);
+            RESULT.addChild(expr2);
+
+            //Sintax Tree
+            root = document.createElement("Div");
+            root.appendChild(expr.element);
+            root.appendChild(expr2.element);
+
+            RESULT.element = root;
+        :}
+        | Expr:expr AND Expr:expr2
+        {:
+            RESULT = new AND_R("And");
+
+            RESULT.addChild(expr);
+            RESULT.addChild(expr2);
+
+            //Sintax Tree
+            root = document.createElement("And");
+            root.appendChild(expr.element);
+            root.appendChild(expr2.element);
+
+            RESULT.element = root;
+        :}
+        | Expr:expr OR Expr:expr2
+        {:
+            RESULT = new OR_R("Or");
+
+            RESULT.addChild(expr);
+            RESULT.addChild(expr2);
+
+            //Sintax Tree
+            root = document.createElement("Or");
+            root.appendChild(expr.element);
+            root.appendChild(expr2.element);
+
+            RESULT.element = root;
+        :}
+        | Expr:expr GT Expr:expr2
+        {:
+            RESULT = new GT_R("Greater_Than");
+
+            RESULT.addChild(expr);
+            RESULT.addChild(expr2);
+
+            //Sintax Tree
+            root = document.createElement("Greater_Than");
+            root.appendChild(expr.element);
+            root.appendChild(expr2.element);
+
+            RESULT.element = root;
+        :}
+        | Expr:expr GE Expr:expr2
+        {:
+            RESULT = new GE_R("Greater_Equal");
+
+            RESULT.addChild(expr);
+            RESULT.addChild(expr2);
+
+            //Sintax Tree
+            root = document.createElement("Greater_Equal");
+            root.appendChild(expr.element);
+            root.appendChild(expr2.element);
+
+            RESULT.element = root;
+        :}
+        | Expr:expr LT Expr:expr2
+        {:
+            RESULT = new LT_R("Less_Than");
+
+            RESULT.addChild(expr);
+            RESULT.addChild(expr2);
+
+            //Sintax Tree
+            root = document.createElement("Less_Than");
+            root.appendChild(expr.element);
+            root.appendChild(expr2.element);
+
+            RESULT.element = root;
+        :}
+        | Expr:expr LE Expr:expr2
+        {:
+            RESULT = new LE_R("Less_Equal");
+
+            RESULT.addChild(expr);
+            RESULT.addChild(expr2);
+
+            //Sintax Tree
+            root = document.createElement("Less_Equal");
+            root.appendChild(expr.element);
+            root.appendChild(expr2.element);
+
+            RESULT.element = root;
+        :}
+        | Expr:expr EQ Expr:expr2
+        {:
+            RESULT = new EQ_R("Equal");
+
+            RESULT.addChild(expr);
+            RESULT.addChild(expr2);
+
+            //Sintax Tree
+            root = document.createElement("Equal");
+            root.appendChild(expr.element);
+            root.appendChild(expr2.element);
+
+            RESULT.element = root;
+            //ok
+            //System.out.println(RESULT.getName());
+        :}
+        | Expr:expr NE Expr:expr2
+        {:
+            RESULT = new NE_R("Not_Equal");
+
+            RESULT.addChild(expr);
+            RESULT.addChild(expr2);
+
+            //Sintax Tree
+            root = document.createElement("Not_Equal");
+            root.appendChild(expr.element);
+            root.appendChild(expr2.element);
+
+            RESULT.element = root;
+            //System.out.println(RESULT.listChildren());
+        :}
+        | MINUS:minus Expr:expr
+        {:
+            RESULT = new MINUS_EXPR("UMINUS", expr);
+            RESULT.element = document.createElement("UMINUS");
+
+            RESULT.addChild(expr);
+            RESULT.element.appendChild(expr.element);
+        :}
+        | NOT Expr:expr
+        {:
+            RESULT = new NOT_EXPR("NOT_EXPRESSION", expr);
+            RESULT.element = document.createElement("NOT_EXPRESSION");
+            RESULT.addChild(expr);
+            RESULT.element.appendChild(expr.element);
+
+            //System.out.println(RESULT.listChildren());
+            //ok
+        :}
+        | SHARP:s Expr:expr
+        {:
+
+            RESULT = new SHARP_EXPR("SHARP_EXPR");
+            RESULT.addChild(expr);
+
+            //SintaxTree Element
+            RESULT.element = document.createElement("SHARP_EXPR");
+            root = document.createElement("SHARP");
+            Attr attr = document.createAttribute("value");
+            attr.setValue("#");
+            root.setAttributeNode(attr);
+            RESULT.element.appendChild(root);
+
+            RESULT.element.appendChild(expr.element);
+
+        :};
