@@ -26,19 +26,21 @@ SINTAX TREE:
 ------------------------------------------------------------------------
 SEMANTIC ANALYSIS and C Translation
 
-	° To semantic analysis and C Translation I implemented the Visitor Design Pattern 	on Syntax Tree. 
+	° To semantic analysis and C Translation I implemented the Visitor Design Pattern on Syntax Tree. 
 	° The package called "Scope" contains classes like SymbolTable or TypeSystem.
 	° the Class which does the Semantic Analysis is "testerSemantic".
 	° the Class which does the C Translation is "testerC".
 ------------------------------------------------------------------------
 VISITOR
-	° the "visitor" package contains the necessary classes and interfaces to 
-	implement the Visitor pattern.
+
+	° the "visitor" package contains the necessary classes and interfaces to implement the visitor
+	pattern
 	° Visitable
 	° Visitor
 	° CVisitor
 	° SemanticVisitor
 ------------------------------------------------------------------------
+
 TEST FILES
 	
 	° file txt in "test_file" directory. 
