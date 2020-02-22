@@ -6,6 +6,7 @@ In the directory "srcjflexcup" there are the full instructions in Italian langua
 
 ------------------------------------------------------------------------
 Technical specifications
+
     See the "t_specifications" read.me file in the directory.
 ------------------------------------------------------------------------
 TOOLS:
